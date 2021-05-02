@@ -119,4 +119,9 @@ public class PlayerController : MonoBehaviour
             playerState = PlayerState.Idle;
         }
     }
+
+    void WindSlash()
+    {  
+        //TODO
+    }
 }

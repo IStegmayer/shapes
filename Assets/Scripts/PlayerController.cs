@@ -13,8 +13,6 @@ public class PlayerController : MonoBehaviour
     float vertical;
     Rigidbody2D rigidbody2d;
     Vector2 lookDirection = new Vector2(1, 0);
-    bool isLaunching = false;
-    bool isCharging = false;
     float startChargeTime = 0;
     float chargeTime = 0;
     float launchTime = 0;
@@ -35,7 +33,6 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (playerState == PlayerState.Idle) Debug.Log("ta re idle");
         Debug.Log(playerState);
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
@@ -47,17 +44,17 @@ public class PlayerController : MonoBehaviour
             lookDirection.Normalize();
         }
 
-        if (!isLaunching && !(playerState == PlayerState.Launching))
+        if (!(playerState == PlayerState.Launching))
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 Debug.Log("GetKeyDown");
-                if (!isCharging) keyDown = true;
+                if (!(playerState == PlayerState.Charging)) keyDown = true;
             }
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 Debug.Log("GetKeyUp");
-                if (isCharging) keyUp = true;
+                if (playerState == PlayerState.Charging) keyUp = true;
             }
         }
     }
@@ -68,11 +65,10 @@ public class PlayerController : MonoBehaviour
         {
             startChargeTime = Time.time;
             playerState = PlayerState.Charging;
-            isCharging = true;
             rigidbody2d.velocity = Vector2.zero;
             keyDown = false;
         }
-        if (keyUp && isCharging && playerState == PlayerState.Charging)
+        if (keyUp && playerState == PlayerState.Charging)
         {
             chargeTime = Time.time - startChargeTime;
             //max launch 3 sec
@@ -83,22 +79,20 @@ public class PlayerController : MonoBehaviour
 
             launchTime = chargeTime / 2;
             playerState = PlayerState.Launching;
-            isLaunching = true;
-            isCharging = false;
             keyUp = false;
         }
-        if (isCharging && !isLaunching && playerState == PlayerState.Charging)
+        if (playerState == PlayerState.Charging)
         {
             scale = 1.0f - ((Time.time - startChargeTime) / maxChargeTime);
             if (0.2f < scale && scale < 1.0f) 
                transform.localScale = new Vector3(scale, scale, scale);
         }
 
-        if (isLaunching && playerState == PlayerState.Launching)
+        if (playerState == PlayerState.Launching)
         {
             Launch();
         }
-        else if (!isCharging && !(playerState == PlayerState.Charging))
+        else if (playerState == PlayerState.Idle)
         {
             Vector2 position = rigidbody2d.position;
             position.x = position.x + speed * horizontal * Time.deltaTime;
@@ -122,8 +116,6 @@ public class PlayerController : MonoBehaviour
             launchTime = 0.0f;
             scale = 1.0f;
             transform.localScale = new Vector3(scale, scale, scale);
-            isLaunching = false;
-            isCharging = false;
             playerState = PlayerState.Idle;
         }
     }

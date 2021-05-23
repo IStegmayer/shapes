@@ -12,22 +12,30 @@ public class PlayerController : MonoBehaviour
     float horizontal;
     float vertical;
     Rigidbody2D rigidbody2d;
+    Animator animator;
     Vector2 lookDirection = new Vector2(1, 0);
     float startChargeTime = 0;
     float chargeTime = 0;
     float launchTime = 0;
-    float scale = 1.0f;
+    float scale = Constants.BASE_SCALE;
     bool keyDown = false;
     bool keyUp = false;
 
-    enum PlayerState {Launching, Charging, Walking, Idle}
+    enum PlayerState {Launching, Charging, Slashing, Walking, Idle}
     PlayerState playerState;
+
+    enum AnimProperties { Charge, isSlashing }
+    static class Constants
+    {
+        public const float BASE_SCALE = 1.0f;
+    }
 
     // Start is called before the first frame update
     void Start()
     {
         playerState = PlayerState.Idle;
         rigidbody2d = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -49,12 +57,19 @@ public class PlayerController : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 Debug.Log("GetKeyDown");
+                animator.SetTrigger(AnimProperties.Charge.ToString());
                 if (!(playerState == PlayerState.Charging)) keyDown = true;
             }
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 Debug.Log("GetKeyUp");
                 if (playerState == PlayerState.Charging) keyUp = true;
+            }
+        } else
+        {
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                WindSlash();
             }
         }
     }
@@ -83,12 +98,14 @@ public class PlayerController : MonoBehaviour
         }
         if (playerState == PlayerState.Charging)
         {
-            scale = 1.0f - ((Time.time - startChargeTime) / maxChargeTime);
-            if (0.2f < scale && scale < 1.0f) 
-               transform.localScale = new Vector3(scale, scale, scale);
+            if (0.2f < scale)
+            {
+                scale = Constants.BASE_SCALE - ((Time.time - startChargeTime) / maxChargeTime);
+                transform.localScale = new Vector3(scale, scale, scale);
+            }
         }
 
-        if (playerState == PlayerState.Launching)
+        if (playerState == PlayerState.Launching  || playerState == PlayerState.Slashing)
         {
             Launch();
         }
@@ -109,19 +126,28 @@ public class PlayerController : MonoBehaviour
             rigidbody2d.velocity = (lookDirection * launchTime * launchMultiplier) + (lookDirection * launchSpeed);
             launchTime -= Time.deltaTime;
         }
-        else
-        {
+        else if (playerState != PlayerState.Slashing)
+        { 
             startChargeTime = 0.0f;
             chargeTime = 0.0f;
             launchTime = 0.0f;
-            scale = 1.0f;
+            scale = Constants.BASE_SCALE;
             transform.localScale = new Vector3(scale, scale, scale);
             playerState = PlayerState.Idle;
         }
     }
 
     void WindSlash()
-    {  
-        //TODO
+    {
+        transform.localScale = new Vector3(Constants.BASE_SCALE, Constants.BASE_SCALE, Constants.BASE_SCALE);
+        playerState = PlayerState.Slashing;
+        animator.SetBool(AnimProperties.isSlashing.ToString(), true);
+    }
+
+    public void EndWindSlash()
+    {
+        transform.localScale = new Vector3(scale, scale, scale);
+        playerState = PlayerState.Launching;
+        animator.SetBool(AnimProperties.isSlashing.ToString(), false);
     }
 }

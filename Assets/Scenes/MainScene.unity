@@ -6648,6 +6648,7 @@ GameObject:
   - component: {fileID: 2012070547}
   - component: {fileID: 2012070546}
   - component: {fileID: 2012070550}
+  - component: {fileID: 2012070551}
   m_Layer: 3
   m_Name: PlayerSprite
   m_TagString: Untagged
@@ -6719,18 +6720,18 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.0008698106, y: 0.08171949}
+  m_Offset: {x: -0.0004043579, y: 0.15606773}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 2, y: 2}
     newSize: {x: 0.32, y: 0.32}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.7081504, y: 0.67538315}
+  m_Size: {x: 1.3753719, y: 1.3134229}
   m_EdgeRadius: 0
 --- !u!50 &2012070548
 Rigidbody2D:
@@ -6782,7 +6783,26 @@ MonoBehaviour:
   speed: 3
   launchMultiplier: 50
   launchSpeed: 30
-  maxChargeTime: 1.5
+  maxChargeTime: 1
+--- !u!95 &2012070551
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012070545}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 1b7c39100a8f9014c9d6364e8242643f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1001 &8614890455846483848
 PrefabInstance:
   m_ObjectHideFlags: 0

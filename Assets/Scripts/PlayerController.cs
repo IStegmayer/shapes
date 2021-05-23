@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     float scale = Constants.BASE_SCALE;
     bool keyDown = false;
     bool keyUp = false;
+    bool mouse0Down = false;
 
     enum PlayerState {Launching, Charging, Slashing, Walking, Idle}
     PlayerState playerState;
@@ -69,14 +70,19 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                WindSlash();
+                if (playerState == PlayerState.Launching) mouse0Down = true;
             }
         }
     }
 
     void FixedUpdate()
     {
-        if (keyDown)
+        if (mouse0Down)
+        {
+            WindSlash();
+            mouse0Down = false;
+        }
+        if (keyDown && playerState != PlayerState.Slashing)
         {
             startChargeTime = Time.time;
             playerState = PlayerState.Charging;
@@ -126,7 +132,7 @@ public class PlayerController : MonoBehaviour
             rigidbody2d.velocity = (lookDirection * launchTime * launchMultiplier) + (lookDirection * launchSpeed);
             launchTime -= Time.deltaTime;
         }
-        else if (playerState != PlayerState.Slashing)
+        else
         { 
             startChargeTime = 0.0f;
             chargeTime = 0.0f;
@@ -147,7 +153,6 @@ public class PlayerController : MonoBehaviour
     public void EndWindSlash()
     {
         transform.localScale = new Vector3(scale, scale, scale);
-        playerState = PlayerState.Launching;
         animator.SetBool(AnimProperties.isSlashing.ToString(), false);
     }
 }

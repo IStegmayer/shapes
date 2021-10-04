@@ -21,11 +21,13 @@ public class PlayerController : MonoBehaviour
     bool keyDown = false;
     bool keyUp = false;
     bool mouse0Down = false;
+    int ricoMultiplier = 0;
 
-    enum PlayerState {Launching, Charging, Slashing, Walking, Idle}
-    PlayerState playerState;
+    enum PlayerStates {Launching, Charging, Slashing, Walking, Idle}
+    PlayerStates playerState = PlayerStates.Idle;
 
-    enum AnimProperties { Charge, isSlashing }
+    enum AnimProperties { isIdle = 0, isCharging = 1, isLaunching = 2, isSlashing = 3}
+    AnimProperties animState = AnimProperties.isIdle;
     static class Constants
     {
         public const float BASE_SCALE = 1.0f;
@@ -34,15 +36,16 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        playerState = PlayerState.Idle;
         rigidbody2d = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        SetPlayerState(PlayerStates.Idle, AnimProperties.isIdle);
     }
 
     // Update is called once per frame
     void Update()
     {
         Debug.Log(playerState);
+        Debug.Log(animator.GetInteger("CurrentState"));
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
         Vector2 move = new Vector2(horizontal, vertical);
@@ -53,43 +56,40 @@ public class PlayerController : MonoBehaviour
             lookDirection.Normalize();
         }
 
-        if (!(playerState == PlayerState.Launching))
+        if (!(playerState == PlayerStates.Launching))
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                Debug.Log("GetKeyDown");
-                animator.SetTrigger(AnimProperties.Charge.ToString());
-                if (!(playerState == PlayerState.Charging)) keyDown = true;
+                if (playerState == PlayerStates.Walking || playerState == PlayerStates.Idle) keyDown = true;
             }
             if (Input.GetKeyUp(KeyCode.Space))
             {
-                Debug.Log("GetKeyUp");
-                if (playerState == PlayerState.Charging) keyUp = true;
+                if (playerState == PlayerStates.Charging) keyUp = true;
             }
         } else
         {
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                if (playerState == PlayerState.Launching) mouse0Down = true;
+                if (playerState == PlayerStates.Launching) mouse0Down = true;
             }
         }
     }
 
     void FixedUpdate()
     {
-        if (mouse0Down)
+        if (mouse0Down) 
         {
             WindSlash();
             mouse0Down = false;
         }
-        if (keyDown && playerState != PlayerState.Slashing)
+        if (keyDown)
         {
             startChargeTime = Time.time;
-            playerState = PlayerState.Charging;
+            SetPlayerState(PlayerStates.Charging, AnimProperties.isCharging);
             rigidbody2d.velocity = Vector2.zero;
             keyDown = false;
         }
-        if (keyUp && playerState == PlayerState.Charging)
+        if (keyUp && playerState == PlayerStates.Charging)
         {
             chargeTime = Time.time - startChargeTime;
             //max launch 3 sec
@@ -99,10 +99,10 @@ public class PlayerController : MonoBehaviour
             }
 
             launchTime = chargeTime / 2;
-            playerState = PlayerState.Launching;
+            SetPlayerState(PlayerStates.Launching, AnimProperties.isLaunching);
             keyUp = false;
         }
-        if (playerState == PlayerState.Charging)
+        if (playerState == PlayerStates.Charging)
         {
             if (0.2f < scale)
             {
@@ -111,11 +111,11 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (playerState == PlayerState.Launching  || playerState == PlayerState.Slashing)
+        if (playerState == PlayerStates.Launching  || playerState == PlayerStates.Slashing)
         {
             Launch();
         }
-        else if (playerState == PlayerState.Idle)
+        else if (playerState == PlayerStates.Idle)
         {
             Vector2 position = rigidbody2d.position;
             position.x = position.x + speed * horizontal * Time.deltaTime;
@@ -125,11 +125,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Wall" && playerState == PlayerStates.Slashing)
+        {
+            launchTime += 1.5f;  
+        }
+    }
+
     void Launch()
     {
         if (launchTime > 0)
         {
-            rigidbody2d.velocity = (lookDirection * launchTime * launchMultiplier) + (lookDirection * launchSpeed);
+            rigidbody2d.velocity = (lookDirection * launchTime * launchMultiplier) + (lookDirection * (launchSpeed + launchSpeed * ricoMultiplier));
             launchTime -= Time.deltaTime;
         }
         else
@@ -139,20 +147,26 @@ public class PlayerController : MonoBehaviour
             launchTime = 0.0f;
             scale = Constants.BASE_SCALE;
             transform.localScale = new Vector3(scale, scale, scale);
-            playerState = PlayerState.Idle;
+            SetPlayerState(PlayerStates.Idle, AnimProperties.isIdle);
         }
     }
 
     void WindSlash()
     {
+        SetPlayerState(PlayerStates.Slashing, AnimProperties.isSlashing);
         transform.localScale = new Vector3(Constants.BASE_SCALE, Constants.BASE_SCALE, Constants.BASE_SCALE);
-        playerState = PlayerState.Slashing;
-        animator.SetBool(AnimProperties.isSlashing.ToString(), true);
     }
 
     public void EndWindSlash()
     {
+        SetPlayerState(PlayerStates.Launching, AnimProperties.isLaunching);
         transform.localScale = new Vector3(scale, scale, scale);
-        animator.SetBool(AnimProperties.isSlashing.ToString(), false);
     }
+    void SetPlayerState(PlayerStates newPlayerState, AnimProperties animProperty)
+    {
+        animator.SetInteger("CurrentState", (int)animProperty);
+        playerState = newPlayerState;
+        animState = animProperty;
+    }
+
 }
